@@ -289,10 +289,11 @@ class CreateHost(Action):
         while task.info.state == "running":
             sleep(1)
         if isinstance(task.info.error, vim.fault.SSLVerifyFault):
+            thumbprint = task.info.error.thumbprint
             LOG.warning("Using thumbprint '{}' for host {} from non-secured "
-                        "source.".format(self.spec.sslThumbprint,
+                        "source.".format(thumbprint,
                                          self.spec.hostName))
-            return task.info.error.thumbprint
+            return thumbprint
         else:
             raise task.info.error
 
