@@ -102,11 +102,13 @@ class Action(object):
 
     @abstractmethod
     def start(self):
+        LOG.info("The action %s started.", self)
         return self
 
     def wait(self):
         if self.tasks:
             wait_for_tasks(self.si, self.tasks)
+        LOG.info("The action %s have finished all the tasks.", self)
 
     def make_so(self):
         self.start().wait()
@@ -122,6 +124,7 @@ class CreateCluster(Action):
         return self
 
     def start(self):
+        Action.start(self)
         self.host_folder.CreateCluster(self.name, vim.cluster.ConfigSpec())
         return self
 
@@ -148,6 +151,7 @@ class CloneVm(Action):
         return self
 
     def start(self):
+        Action.start(self)
         relocate_spec = vim.vm.CloneSpec(
             location=vim.vm.RelocateSpec(pool=self.resource_pool),
             template=self.to_template)
@@ -190,6 +194,7 @@ class CreateVm(Action):
         return self
 
     def start(self):
+        Action.start(self)
         self.spec.files = vim.vm.FileInfo(
             vmPathName="[{datastore_name}] {name}".format(
                 datastore_name=self.datastore_name,
@@ -270,6 +275,7 @@ class CreateHost(Action):
         return self
 
     def start(self):
+        Action.start(self)
         if self.thumbprint is self.ANY_THUMBPRINT:
             self.spec.sslThumbprint = self.get_host_thumbprint()
             self.tasks.append(self.cluster.AddHost(self.spec, True))
@@ -283,7 +289,7 @@ class CreateHost(Action):
         while task.info.state == "running":
             sleep(1)
         if isinstance(task.info.error, vim.fault.SSLVerifyFault):
-            LOG.warning("Using tumbprint '{}' for host {} from non-secured "
+            LOG.warning("Using thumbprint '{}' for host {} from non-secured "
                         "source.".format(self.spec.sslThumbprint,
                                          self.spec.hostName))
             return task.info.error.thumbprint
@@ -301,6 +307,7 @@ class DestroyEntity(Action):
         return self
 
     def start(self):
+        Action.start(self)
         if self.entity:
             self.tasks.append(self.entity.Destroy())
         return self
@@ -308,6 +315,7 @@ class DestroyEntity(Action):
 
 class DestroyVM(DestroyEntity):
     def start(self):
+        Action.start(self)
         if self.entity:
             self.tasks.append(self.entity.Destroy())
         return self
@@ -319,6 +327,7 @@ class DestroyHost(DestroyEntity):
 
 class DisconnectHost(DestroyEntity):
     def start(self):
+        Action.start(self)
         if self.entity:
             self.tasks.append(self.entity.Disconnect())
         return self
@@ -326,6 +335,7 @@ class DisconnectHost(DestroyEntity):
 
 class DestroyCluster(DestroyEntity):
     def start(self):
+        Action.start(self)
         if self.entity:
             self.entity.Destroy()
         return self
