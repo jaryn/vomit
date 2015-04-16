@@ -315,11 +315,7 @@ class DestroyEntity(Action):
 
 
 class DestroyVM(DestroyEntity):
-    def start(self):
-        Action.start(self)
-        if self.entity:
-            self.tasks.append(self.entity.Destroy())
-        return self
+    pass
 
 
 class DestroyHost(DestroyEntity):
@@ -335,8 +331,4 @@ class DisconnectHost(DestroyEntity):
 
 
 class DestroyCluster(DestroyEntity):
-    def start(self):
-        Action.start(self)
-        if self.entity:
-            self.entity.Destroy()
-        return self
+    pass
