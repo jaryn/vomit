@@ -43,6 +43,9 @@ CONF.register_opts(opts)
 
 
 def state_present(si):
+    ac.CreateDVSwitch(si).name("test_dswitch").target("New Datacenter/network")\
+        .make_so()
+
     ac.CreateCluster(si)\
         .name(CONF.esxi_cluster_name)\
         .host_folder('New Datacenter/host')\
@@ -89,6 +92,8 @@ def state_absent(si):
             CONF.esxi_cluster_name, CONF.esxi_host_address), False).make_so()
     ac.DestroyCluster(si).path('New Datacenter/host/{}'.format(
         CONF.esxi_cluster_name), False).make_so()
+    ac.DestroyDVSwitch(si).path(
+        'New Datacenter/network/{}'.format("test_dswitch"), False).make_so()
 
 
 def add_actions(subparsers):

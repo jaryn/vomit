@@ -4,7 +4,7 @@
 #
 # This file is part of pyvmomi ansible module.
 #
-# pyvmomi ansible module is free software: you can redistribute it and/or
+# pyvmomi_ansible module is free software: you can redistribute it and/or
 # modify it under the terms of the GNU General Public License as published by
 # the Free Software Foundation, either version 3 of the License.
 #
@@ -298,6 +298,24 @@ class CreateHost(Action):
             raise task.info.error
 
 
+class CreateDVSwitch(Action):
+    def name(self, name):
+        spec = vim.dvs.VmwareDistributedVirtualSwitch.ConfigSpec(name=name)
+        self.switch_spec = vim.DistributedVirtualSwitch.CreateSpec(
+            configSpec=spec)
+        return self
+
+    def target(self, path):
+        self.network_folder = self._find_obj(path)
+        return self
+
+    def start(self):
+        Action.start(self)
+        self.task = self.network_folder.CreateDistributedVirtualSwitch(
+            self.switch_spec)
+        return self
+
+
 class DestroyEntity(Action):
     def path(self, path, must_exist=True):
         try:
@@ -331,4 +349,8 @@ class DisconnectHost(DestroyEntity):
 
 
 class DestroyCluster(DestroyEntity):
+    pass
+
+
+class DestroyDVSwitch(DestroyEntity):
     pass
