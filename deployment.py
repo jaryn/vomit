@@ -32,6 +32,8 @@ opts = [
     cfg.StrOpt('esxi_datastore_name', default='datastore1'),
     cfg.StrOpt('esxi_cluster_name', default='test'),
     cfg.StrOpt('vm_name', default='test'),
+    cfg.StrOpt('vm_network', default='br100'),
+    cfg.StrOpt('vm_mac', default="11:22:33:44:55:66"),
     cfg.StrOpt('vm_cluster_name', default='foo'),
     cfg.StrOpt('template_name', default="rhel-guest-image-template2")
 ]
@@ -57,7 +59,7 @@ def state_present(si):
         .vm_folder_path('New Datacenter/vm/')\
         .host_path('New Datacenter/host/{}'.format(CONF.vm_cluster_name))\
         .datastore_name(CONF.esxi_datastore_name)\
-        .network('br100', "11:22:33:44:55:66")\
+        .network(CONF.vm_network, CONF.vm_mac)\
         .disk(1e6)\
         .disk(2e6)\
         .scsi()\
