@@ -316,6 +316,29 @@ class CreateDVSwitch(Action):
         return self
 
 
+class CreateDVSwitchPortGroup(Action):
+    def __init__(self, si):
+        Action.__init__(self, si)
+        self.spec = vim.dvs.DistributedVirtualPortgroup.ConfigSpec()
+
+    def name(self, name):
+        self.spec.name = name
+        return self
+
+    def type(self, type):
+        self.spec.type = type
+        return self
+
+    def target(self, path):
+        self.vswitch = self._find_obj(path)
+        return self
+
+    def start(self):
+        Action.start(self)
+        self.task = self.vswitch.AddPortgroup(self.spec)
+        return self
+
+
 class DestroyEntity(Action):
     def path(self, path, must_exist=True):
         try:

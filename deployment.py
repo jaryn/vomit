@@ -31,11 +31,13 @@ opts = [
     cfg.StrOpt('esxi_host_password', required=True, secret=True),
     cfg.StrOpt('esxi_datastore_name', default='datastore1'),
     cfg.StrOpt('esxi_cluster_name', default='test'),
+    cfg.StrOpt('dvswitch_name', default="test_dvswitch"),
+    cfg.StrOpt('dvswitch_portgroup_name', default="test_dvswitch"),
     cfg.StrOpt('vm_name', default='test'),
     cfg.StrOpt('vm_network', default='br100'),
     cfg.StrOpt('vm_mac', default="11:22:33:44:55:66"),
     cfg.StrOpt('vm_cluster_name', default='foo'),
-    cfg.StrOpt('template_name', default="rhel-guest-image-template2")
+    cfg.StrOpt('template_name', default="rhel-guest-image-template2"),
 ]
 
 CONF = cfg.ConfigOpts()
@@ -43,7 +45,14 @@ CONF.register_opts(opts)
 
 
 def state_present(si):
-    ac.CreateDVSwitch(si).name("test_dswitch").target("New Datacenter/network")\
+    ac.CreateDVSwitch(si)\
+        .name(CONF.dvswitch_name)\
+        .target("New Datacenter/network")\
+        .make_so()
+
+    ac.CreateDVSwitchPortGroup(si)\
+        .target("New Datacenter/network/{}".format(CONF.dvswitch_name))\
+        .name(CONF.dvswitch_portgroup_name)\
         .make_so()
 
     ac.CreateCluster(si)\
