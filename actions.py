@@ -333,6 +333,12 @@ class CreateDVSwitchPortGroup(Action):
         self.vswitch = self._find_obj(path)
         return self
 
+    def vlan(self, vlan):
+        dvs_vim = vim.dvs.VmwareDistributedVirtualSwitch
+        vlan = dvs_vim.VlanIdSpec(vlanId=vlan)
+        self.spec.defaultPortConfig = dvs_vim.VmwarePortConfigPolicy(vlan=vlan)
+        return self
+
     def start(self):
         Action.start(self)
         self.task = self.vswitch.AddPortgroup(self.spec)
