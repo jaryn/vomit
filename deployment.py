@@ -124,3 +124,7 @@ def cli_main():
 
         action = CONF.action.name
         globals().get("state_" + action)(si)
+
+
+def list_opts():
+    return [['DEFAULT', opts]]
