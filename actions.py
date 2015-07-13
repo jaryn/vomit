@@ -131,7 +131,7 @@ class CreateCluster(Action):
 
 class CloneVm(Action):
     def name(self, name):
-        self.name = name
+        self.name_ = name
         return self
 
     def vm_folder_path(self, path):
@@ -150,13 +150,66 @@ class CloneVm(Action):
         self.to_template = to_template
         return self
 
+    def _mac(self, mac):
+        self.mac_ = mac
+        return self
+
     def start(self):
         Action.start(self)
-        relocate_spec = vim.vm.CloneSpec(
+
+        cs = vim.vm.ConfigSpec(deviceChange=[])
+
+        if getattr(self, 'mac_', None):
+            nics = [vm_device for vm_device
+                    in self.source.config.hardware.device
+                    if isinstance(vm_device,
+                                  vim.vm.device.VirtualEthernetCard)]
+            LOG.debug('Found ethernet devices %s', nics)
+            device = nics[0]
+
+            nicspec = vim.vm.device.VirtualDeviceSpec()
+            nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+            nicspec.device = device
+            device.addressType = "manual"
+            device.macAddress = str(self.mac_)
+            cs.deviceChange.append(nicspec)
+
+        clone_spec = vim.vm.CloneSpec(
             location=vim.vm.RelocateSpec(pool=self.resource_pool),
-            template=self.to_template)
+            template=self.to_template,
+            config=cs)
         self.tasks.append(self.source.Clone(
-            self.folder, self.name, relocate_spec))
+            self.folder, self.name_, clone_spec))
+        return self
+
+
+class PowerOnVm(Action):
+    def vm_path(self, path):
+        self.vm = self._find_obj(path)
+        return self
+
+    def source_path(self, path):
+        self.source = self._find_obj(path)
+        return self
+
+    def resource_pool_path(self, path):
+        self.resource_pool = self._find_obj(path)
+        return self
+
+    def to_template(self, to_template):
+        self.to_template = to_template
+        return self
+
+    def start(self):
+        Action.start(self)
+        self.tasks.append(self.vm.PowerOn())
+        return self
+
+
+class PowerOffVm(PowerOnVm):
+    def start(self):
+        Action.start(self)
+        self.tasks.append(self.vm.PowerOff())
         return self
 
 
@@ -383,3 +436,18 @@ class DestroyCluster(DestroyEntity):
 
 class DestroyDVSwitch(DestroyEntity):
     pass
+
+
+class BatchExecutor(object):
+    def __enter__(self):
+        self.actions = []
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        while self.actions:
+            action = self.actions.pop()
+            action.wait()
+
+    def submit(self, action):
+        action.start()
+        self.actions.append(action)
