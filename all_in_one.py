@@ -30,8 +30,10 @@ opts = [
     cfg.StrOpt('vcenter_password', required=True, secret=True),
     cfg.StrOpt('controller_vm_name', default='controller'),
     cfg.StrOpt('controller_vm_mac', required=True),
+    cfg.StrOpt('controller_vm_memory'),
     cfg.StrOpt('tester_vm_name', default='tester'),
     cfg.StrOpt('tester_vm_mac', required=True),
+    cfg.StrOpt('tester_vm_memory'),
     cfg.StrOpt('vm_folder_path', default='khaleesi'),
     cfg.StrOpt('vm_cluster_name', default='bar'),
     cfg.StrOpt('template_name', default="rhel-guest-image"),
@@ -43,13 +45,18 @@ CONF.register_opts(opts)
 
 def state_present(si):
     with ac.BatchExecutor() as be:
-        for name, mac in ((CONF.controller_vm_name, CONF.controller_vm_mac),
-                          (CONF.tester_vm_name, CONF.tester_vm_mac)):
+        for name, mac, memory in ((CONF.controller_vm_name,
+                                   CONF.controller_vm_mac,
+                                   CONF.controller_vm_memory),
+                                  (CONF.tester_vm_name,
+                                   CONF.tester_vm_mac,
+                                   CONF.tester_vm_memory)):
             be.submit(
                 ac.CloneVm(si)
                 .name(name)
                 .to_template(False)
                 ._mac(mac)
+                ._memory(memory)
                 .vm_folder_path("New Datacenter/vm/{}".format(
                     CONF.vm_folder_path))
                 .source_path("New Datacenter/vm/{}".format(CONF.template_name))

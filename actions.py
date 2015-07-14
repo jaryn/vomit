@@ -151,7 +151,13 @@ class CloneVm(Action):
         return self
 
     def _mac(self, mac):
-        self.mac_ = mac
+        if mac:
+            self.mac_ = str(mac)
+        return self
+
+    def _memory(self, memoryMB):
+        if memoryMB:
+            self.memoryMB = int(memoryMB)
         return self
 
     def start(self):
@@ -159,7 +165,10 @@ class CloneVm(Action):
 
         cs = vim.vm.ConfigSpec(deviceChange=[])
 
-        if getattr(self, 'mac_', None):
+        mac = getattr(self, 'mac_', None)
+        memoryMB = getattr(self, 'memoryMB', None)
+
+        if mac:
             nics = [vm_device for vm_device
                     in self.source.config.hardware.device
                     if isinstance(vm_device,
@@ -173,6 +182,9 @@ class CloneVm(Action):
             device.addressType = "manual"
             device.macAddress = str(self.mac_)
             cs.deviceChange.append(nicspec)
+
+        if memoryMB:
+            cs.memoryMB = memoryMB
 
         clone_spec = vim.vm.CloneSpec(
             location=vim.vm.RelocateSpec(pool=self.resource_pool),
