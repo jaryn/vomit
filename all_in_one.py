@@ -24,10 +24,6 @@ from pyVim import connect
 import actions as ac
 
 opts = [
-    cfg.StrOpt('vcenter_host', required=True,
-               help='The address of the vcenter.'),
-    cfg.StrOpt('vcenter_user', default='root'),
-    cfg.StrOpt('vcenter_password', required=True, secret=True),
     cfg.StrOpt('controller_vm_mac', required=True),
     cfg.StrOpt('controller_vm_memory'),
     cfg.StrOpt('tester_vm_mac', required=True),
@@ -38,8 +34,17 @@ opts = [
     cfg.StrOpt('deployment_prefix', default=""),
 ]
 
+vcenter_opts = [
+    cfg.StrOpt('host', required=True,
+               help='The address of the vcenter.'),
+    cfg.StrOpt('user', default='root'),
+    cfg.StrOpt('password', required=True, secret=True),
+]
+
+
 CONF = cfg.ConfigOpts()
 CONF.register_opts(opts)
+CONF.register_opts(vcenter_opts, group="vcenter")
 
 def state_present(si):
     controller_vm_name = "{}controller".format(CONF.deployment_prefix)
@@ -94,15 +99,18 @@ def cli_main():
     import logging
     logging.basicConfig(level=logging.DEBUG)
     CONF.register_cli_opt(cfg.SubCommandOpt('action', handler=add_actions))
-    CONF(project="ansible_pyvmomi", prog="all-in-one")
+    CONF(project="vomit", prog="all-in-one")
     with ac.disconnecting(
-        connect.SmartConnect(host=CONF.vcenter_host,
-                             user=CONF.vcenter_user,
-                             pwd=CONF.vcenter_password)) as si:
+        connect.SmartConnect(host=CONF.vcenter.host,
+                             user=CONF.vcenter.user,
+                             pwd=CONF.vcenter.password)) as si:
 
         action = CONF.action.name
         globals().get("state_" + action)(si)
 
 
 def list_opts():
-    return [['DEFAULT', opts]]
+    return [
+        ['DEFAULT', opts],
+        ['vcenter', vcenter_opts]
+    ]

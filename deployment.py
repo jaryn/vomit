@@ -22,10 +22,6 @@ from pyVim import connect
 import actions as ac
 
 opts = [
-    cfg.StrOpt('vcenter_host', required=True,
-               help='The address of the vcenter.'),
-    cfg.StrOpt('vcenter_user', default='root'),
-    cfg.StrOpt('vcenter_password', required=True, secret=True),
     cfg.StrOpt('esxi_host_address', required=True),
     cfg.StrOpt('esxi_host_username', required=True),
     cfg.StrOpt('esxi_host_password', required=True, secret=True),
@@ -41,8 +37,17 @@ opts = [
     cfg.StrOpt('template_name', default="rhel-guest-image-template2"),
 ]
 
+vcenter_opts = [
+    cfg.StrOpt('host', required=True,
+               help='The address of the vcenter.'),
+    cfg.StrOpt('user', default='root'),
+    cfg.StrOpt('password', required=True, secret=True),
+]
+
+
 CONF = cfg.ConfigOpts()
 CONF.register_opts(opts)
+CONF.register_opts(vcenter_opts, group="vcenter")
 
 
 def state_present(si):
@@ -118,13 +123,16 @@ def cli_main():
     CONF.register_cli_opt(cfg.SubCommandOpt('action', handler=add_actions))
     CONF(project="vomit", prog="deployment")
     with ac.disconnecting(
-        connect.SmartConnect(host=CONF.vcenter_host,
-                             user=CONF.vcenter_user,
-                             pwd=CONF.vcenter_password)) as si:
+        connect.SmartConnect(host=CONF.vcenter.host,
+                             user=CONF.vcenter.user,
+                             pwd=CONF.vcenter.password)) as si:
 
         action = CONF.action.name
         globals().get("state_" + action)(si)
 
 
 def list_opts():
-    return [['DEFAULT', opts]]
+    return [
+        ['DEFAULT', opts],
+        ['vcenter', vcenter_opts]
+    ]
