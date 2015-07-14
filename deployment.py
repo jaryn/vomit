@@ -116,7 +116,7 @@ def cli_main():
     import logging
     logging.basicConfig(level=logging.DEBUG)
     CONF.register_cli_opt(cfg.SubCommandOpt('action', handler=add_actions))
-    CONF(project="ansible_pyvmomi", prog="deployment")
+    CONF(project="vomit", prog="deployment")
     with ac.disconnecting(
         connect.SmartConnect(host=CONF.vcenter_host,
                              user=CONF.vcenter_user,
