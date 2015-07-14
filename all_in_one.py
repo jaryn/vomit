@@ -28,27 +28,28 @@ opts = [
                help='The address of the vcenter.'),
     cfg.StrOpt('vcenter_user', default='root'),
     cfg.StrOpt('vcenter_password', required=True, secret=True),
-    cfg.StrOpt('controller_vm_name', default='controller'),
     cfg.StrOpt('controller_vm_mac', required=True),
     cfg.StrOpt('controller_vm_memory'),
-    cfg.StrOpt('tester_vm_name', default='tester'),
     cfg.StrOpt('tester_vm_mac', required=True),
     cfg.StrOpt('tester_vm_memory'),
     cfg.StrOpt('vm_folder_path', default='khaleesi'),
     cfg.StrOpt('vm_cluster_name', default='bar'),
     cfg.StrOpt('template_name', default="rhel-guest-image"),
+    cfg.StrOpt('deployment_prefix', default=""),
 ]
 
 CONF = cfg.ConfigOpts()
 CONF.register_opts(opts)
 
-
 def state_present(si):
+    controller_vm_name = "{}controller".format(CONF.deployment_prefix)
+    tester_vm_name = "{}tester".format(CONF.deployment_prefix)
+
     with ac.BatchExecutor() as be:
-        for name, mac, memory in ((CONF.controller_vm_name,
+        for name, mac, memory in ((controller_vm_name,
                                    CONF.controller_vm_mac,
                                    CONF.controller_vm_memory),
-                                  (CONF.tester_vm_name,
+                                  (tester_vm_name,
                                    CONF.tester_vm_mac,
                                    CONF.tester_vm_memory)):
             be.submit(
@@ -64,18 +65,20 @@ def state_present(si):
                     CONF.vm_cluster_name))
             )
     with ac.BatchExecutor() as be:
-        for name in (CONF.controller_vm_name, CONF.tester_vm_name):
+        for name in (controller_vm_name, tester_vm_name):
             be.submit(ac.PowerOnVm(si).vm_path(
                 "New Datacenter/vm/{}/{}".format(CONF.vm_folder_path, name)))
 
 
 def state_absent(si):
+    controller_vm_name = "{}controller".format(CONF.deployment_prefix)
+    tester_vm_name = "{}tester".format(CONF.deployment_prefix)
     with ac.BatchExecutor() as be:
-        for name in (CONF.controller_vm_name, CONF.tester_vm_name):
+        for name in (controller_vm_name, tester_vm_name):
             be.submit(ac.PowerOffVm(si).vm_path(
                 "New Datacenter/vm/{}/{}".format(CONF.vm_folder_path, name)))
     with ac.BatchExecutor() as be:
-        for name in (CONF.controller_vm_name, CONF.tester_vm_name):
+        for name in (controller_vm_name, tester_vm_name):
             be.submit(ac.DestroyVM(si).path(
                 'New Datacenter/vm/{}/{}'.format(CONF.vm_folder_path, name),
                 False)
