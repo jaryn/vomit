@@ -19,7 +19,7 @@
 try:
     from oslo.config import cfg
 except ImportError:
-    from oslo_cofig import cfg
+    from oslo_config import cfg
 from pyVim import connect
 
 import actions as ac
