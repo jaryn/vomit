@@ -16,7 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with pyvmomi ansible more.  If not, see <http://www.gnu.org/licenses/>.
 
-from oslo.config import cfg
+try:
+    from oslo.config import cfg
+except ImportError:
+    from oslo_cofig import cfg
 from pyVim import connect
 
 import actions as ac
