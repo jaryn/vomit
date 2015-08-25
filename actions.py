@@ -29,9 +29,6 @@ from pyVmomi import vmodl
 
 LOG = logging.getLogger(__name__)
 
-import ssl
-default_context = ssl._create_default_https_context
-ssl._create_default_https_context = ssl._create_unverified_context
 
 def wait_for_tasks(service_instance, tasks):
     """Given the service instance si and tasks, it returns after all the
