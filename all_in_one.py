@@ -36,6 +36,9 @@ opts = [
     cfg.StrOpt('vm_cluster_name', default='bar'),
     cfg.StrOpt('template_name', default="rhel-guest-image"),
     cfg.StrOpt('deployment_prefix', default=""),
+    cfg.BoolOpt('workaround_pyvmomi_235', default=True,
+                   help='Workaround '
+                   'https://github.com/vmware/pyvmomi/issues/235'),
 ]
 
 vcenter_opts = [
@@ -104,10 +107,18 @@ def cli_main():
     logging.basicConfig(level=logging.DEBUG)
     CONF.register_cli_opt(cfg.SubCommandOpt('action', handler=add_actions))
     CONF(project="vomit", prog="all-in-one")
+
+    if CONF.workaround_pyvmomi_235:
+        import ssl
+        default_context = ssl._create_default_https_context
+        ssl._create_default_https_context = ssl._create_unverified_context
+
     with ac.disconnecting(
         connect.SmartConnect(host=CONF.vcenter.host,
                              user=CONF.vcenter.user,
                              pwd=CONF.vcenter.password)) as si:
+        if CONF.workaround_pyvmomi_235:
+            ssl._create_default_https_context = default_context
 
         action = CONF.action.name
         globals().get("state_" + action)(si)
