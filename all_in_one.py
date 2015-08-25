@@ -36,9 +36,10 @@ opts = [
     cfg.StrOpt('vm_cluster_name', default='bar'),
     cfg.StrOpt('template_name', default="rhel-guest-image"),
     cfg.StrOpt('deployment_prefix', default=""),
-    cfg.BoolOpt('workaround_pyvmomi_235', default=True,
-                   help='Workaround '
-                   'https://github.com/vmware/pyvmomi/issues/235'),
+    cfg.BoolOpt(
+        'workaround_pyvmomi_235',
+        default=False,
+        help='Workaround https://github.com/vmware/pyvmomi/issues/235'),
 ]
 
 vcenter_opts = [
