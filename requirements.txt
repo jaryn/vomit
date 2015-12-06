@@ -1,3 +1,10 @@
 pbr
-pyvmomi
 oslo.config
+
+# The 6.0.0 is strict about cert verification, which we don't actually need
+# when using on trusted network. The error is
+# requests.exceptions.SSLError: [Errno 1] _ssl.c:510: error:14090086:SSL 
+# routines:SSL3_GET_SERVER_CERTIFICATE:certificate verify failed
+# It is not tivial to turn the verification off. Seems like the simplest is to
+# use the older version.
+pyvmomi<6.0.0
