@@ -54,28 +54,32 @@ CONF = cfg.ConfigOpts()
 CONF.register_opts(opts)
 CONF.register_opts(vcenter_opts, group="vcenter")
 
+
 def state_present(si):
     controller_vm_name = "{}controller".format(CONF.deployment_prefix)
     tester_vm_name = "{}tester".format(CONF.deployment_prefix)
 
     with ac.BatchExecutor() as be:
-        for name, mac, memory in ((controller_vm_name,
-                                   CONF.controller_vm_mac,
-                                   CONF.controller_vm_memory),
-                                  (tester_vm_name,
-                                   CONF.tester_vm_mac,
-                                   CONF.tester_vm_memory)):
+        for name, memory in ((controller_vm_name, CONF.controller_vm_memory),
+                             (tester_vm_name, CONF.tester_vm_memory)):
             be.submit(
                 ac.CloneVm(si)
                 .name(name)
                 .to_template(False)
-                ._mac(mac)
                 ._memory(memory)
                 .vm_folder_path("New Datacenter/vm/{}".format(
                     CONF.vm_folder_path))
                 .source_path("New Datacenter/vm/{}".format(CONF.template_name))
                 .resource_pool_path('New Datacenter/host/{}/Resources'.format(
                     CONF.vm_cluster_name))
+            )
+    with ac.BatchExecutor() as be:
+        for name, mac in ((controller_vm_name, CONF.controller_vm_mac),
+                          (tester_vm_name, CONF.tester_vm_mac)):
+            be.submit(
+                ac.ChangeMAC(si)
+                .path('New Datacenter/vm/{}/{}'.format(CONF.vm_folder_path, name))
+                .mac(mac)
             )
     with ac.BatchExecutor() as be:
         for name in (controller_vm_name, tester_vm_name):

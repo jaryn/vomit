@@ -450,6 +450,31 @@ class DestroyDVSwitch(DestroyEntity):
     pass
 
 
+class ChangeMAC(Action):
+    def path(self, path):
+        self.entity = self._find_obj(path)
+        return self
+
+    def mac(self, mac):
+        self._mac = mac
+        return self
+
+    def start(self):
+        Action.start(self)
+        device = [device for device in self.entity.config.hardware.device
+                  if isinstance(device, vim.vm.device.VirtualEthernetCard)][0]
+        cs = vim.vm.ConfigSpec(deviceChange=[])
+
+        nicspec = vim.vm.device.VirtualDeviceSpec()
+        nicspec.operation = vim.vm.device.VirtualDeviceSpec.Operation.edit
+        nicspec.device = device
+        device.addressType = "manual"
+        device.macAddress = self._mac
+        cs.deviceChange.append(nicspec)
+
+        self.tasks.append(self.entity.Reconfigure(cs))
+        return self
+
 class BatchExecutor(object):
     def __enter__(self):
         self.actions = []
